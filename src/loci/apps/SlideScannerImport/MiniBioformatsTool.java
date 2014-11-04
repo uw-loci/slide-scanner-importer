@@ -46,14 +46,15 @@ public class MiniBioformatsTool {
 		root = (OMEXMLMetadataRoot) omexmlMeta.getRoot();
 
 	}
-
-	public ImagePlus[] getImages() throws FormatException, IOException{
-		if(imps == null){
-			ImagePlusReader reader = new ImagePlusReader(process);
-			imps = reader.openImagePlus();
-		}
-		return imps;
-	}
+	
+//	//DOES NOT WORK
+//	public ImagePlus[] getImages() throws FormatException, IOException{
+//		if(imps == null){
+//			ImagePlusReader reader = new ImagePlusReader(process);
+//			imps = reader.openImagePlus();
+//		}
+//		return imps;
+//	}
 
 	public static void attachROIStoImage(ImagePlus imp, ArrayList<ArrayList<Float>> vertices ){
 

@@ -32,6 +32,7 @@ public class AperioScannerInterpreter {
 	private double[] zeroPoint, zoomRatioXY;
 	private int[] largeImageDimensions;
 	private MiniBioformatsTool xmlHolder;
+	private String XMLasString;
 
 	public AperioScannerInterpreter(String svsFullPath, String xmlFullPath) {
 
@@ -41,10 +42,11 @@ public class AperioScannerInterpreter {
 		try{
 			xmlHolder = new MiniBioformatsTool(svsFullPath);
 			largeImageDimensions = xmlHolder.extractDimensionsFromOMEXML(0);
+			XMLasString = xmlHolder.extractXMLasString();
 			xmlHolder.close();
 			xmlHolder = null;
 			
-			ImagePlus slideImages[] = openAperioImages(svsFullPath);
+			ImagePlus slideImages[] = openAperioImages(svsFullPath, getNeededImageIndexes()); 
 			fullSlideImage = slideImages[1];
 			lowresScanImage = slideImages[0];
 			//			Debug:
@@ -61,7 +63,7 @@ public class AperioScannerInterpreter {
 			
 			slideImages[0].close();
 			slideImages[1].close();
-			IJ.log("blah");
+
 
 		} catch(Exception e){
 			IJ.log(e.getMessage());
@@ -70,17 +72,27 @@ public class AperioScannerInterpreter {
 		}		
 	}
 	
+	public boolean[] getNeededImageIndexes(){
+		
+		int indexTracker = 0, nextIndexTracker = 0;
+		
+		indexTracker = XMLasString.lastIndexOf("Image:") + "Image:".length();
+		nextIndexTracker = XMLasString.indexOf("\"", indexTracker);
+		int numImages = Integer.parseInt( XMLasString.substring( indexTracker, nextIndexTracker) ) +1;
+		
+		boolean[] retVal = new boolean[numImages];
+		retVal[numImages-1] = true;
+		retVal[numImages-4] = true;
+		
+		return retVal;
+	}
+	
 	public ImagePlus getFullSlideImage(){
 		return fullSlideImage;
 	}
 	
 	public ImagePlus getLowResScanImage(){
 		return lowresScanImage;
-	}
-	
-	public double getSlidePixelsPerMicron(){
-		
-		return 0;
 	}
 	
 	public ArrayList<ArrayList<Float>> scaleROIStoLowresImage(){
@@ -98,7 +110,7 @@ public class AperioScannerInterpreter {
 		return retVal;
 	}
 	
-	public static ImagePlus[] openAperioImages (String path) throws IOException, FormatException{
+	public static ImagePlus[] openAperioImages (String path, boolean[] seriesToOpen) throws IOException, FormatException{
 		ImporterOptions options = new ImporterOptions();
 		options.setId(path);
 		options.setAutoscale(false);
@@ -107,16 +119,10 @@ public class AperioScannerInterpreter {
 		options.setSplitFocalPlanes(false);
 		options.setShowMetadata(false);
 		options.setShowOMEXML(false);
-
-		//This is really counting on the fact that Aperio images always have 7 images, where the last one is the full slide image.
-		//	If this ever changes, then this code is wrong, and we'd need the user to identify which image is which.
-		options.setSeriesOn(0, false);
-		options.setSeriesOn(1, false);
-		options.setSeriesOn(2, false);
-		options.setSeriesOn(3, true);
-		options.setSeriesOn(4, false);
-		options.setSeriesOn(5, false);
-		options.setSeriesOn(6, true);
+		
+		for(int i=0; i<seriesToOpen.length; i++){
+			options.setSeriesOn(i, seriesToOpen[i]);
+		}
 
 		return BF.openImagePlus(options);
 	}
@@ -155,6 +161,25 @@ public class AperioScannerInterpreter {
 		if(gd2.wasCanceled()) return null;
 		return getUserEnteredStartPoint(imp.duplicate());
 
+	}
+	
+	public double[] getPPMofLowResImage(){
+		String fullXML = XMLasString;
+		double[] retVal = new double[2];
+		int indexTracker = 0, nextIndexTracker = 0;
+		
+		indexTracker = fullXML.indexOf("PhysicalSizeX=\"") + "PhysicalSizeX\"".length() +1;
+		nextIndexTracker = fullXML.indexOf("\"", indexTracker);
+		retVal[0] = 1 / Double.parseDouble( fullXML.substring( indexTracker, nextIndexTracker) );
+		
+		indexTracker = fullXML.indexOf("PhysicalSizeY=\"") + "PhysicalSizeY\"".length() +1;
+		nextIndexTracker = fullXML.indexOf("\"", indexTracker);
+		retVal[1] = 1 / Double.parseDouble( fullXML.substring( indexTracker, nextIndexTracker) );
+		
+		retVal[0] /= zoomRatioXY[0];
+		retVal[1] /= zoomRatioXY[1];
+		
+		return retVal;
 	}
 
 	public double[] getZoomRatioXY(){
