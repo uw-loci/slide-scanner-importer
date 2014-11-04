@@ -78,6 +78,11 @@ public class AperioScannerInterpreter {
 		return lowresScanImage;
 	}
 	
+	public double getSlidePixelsPerMicron(){
+		
+		return 0;
+	}
+	
 	public ArrayList<ArrayList<Float>> scaleROIStoLowresImage(){
 		
 		ArrayList<ArrayList<Float>> retVal = new ArrayList<ArrayList<Float>>();
@@ -116,7 +121,7 @@ public class AperioScannerInterpreter {
 		return BF.openImagePlus(options);
 	}
 	
-	public double[] getZero(){
+	public double[] getUserSelectedZero(){
 		return zeroPoint;
 	}
 	

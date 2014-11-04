@@ -31,8 +31,10 @@ import loci.plugins.in.ImporterPrompter;
 public class Import_Slide_Scanner_ROIs implements PlugIn {
 
 	ImagePlus fullSlideImage, lowresScanImage;
+	String fullFilePath;
+	double PPM_WISCSCAN, PPM_SLIDE;
 	double[] zoomRatioXY;
-	float[] avgROIzoomRatioXY,tissueLocationOnSlide;
+	float[] avgROIzoomRatioXY, tissueLocationOnSlide;
 	ArrayList<ArrayList<Float>> rois;
 	FloatPolygon lowresSIFTmatches, slideSIFTmatches;
 	AperioScannerInterpreter AperioInterpreter;
@@ -61,22 +63,24 @@ public class Import_Slide_Scanner_ROIs implements PlugIn {
 
 		findCorrespondences();
 		tissueLocationOnSlide = calculateTissueLocationOnSlide();
-		placeROISonSlideImage(true);
-		
-		
-		IJ.log(""+tissueLocationOnSlide);
+		rois = placeROISonSlideImage(true);
+		rois = recreateROIListRelativeToStartPoint();
+
+		writeWiscScanXYZ();
 
 	}
-	
+
 	private boolean createDialog(){
 
 		try{
 			GenericDialog gd = new GenericDialog("Select Format:");
-			gd.addMessage ("Please select from these supported formats:");
+			gd.addNumericField ("WiscScan pixels/micron with current objective and zoom: ",  0, 0);
+			gd.addMessage ("Select from these supported formats:");
 			gd.addChoice("Supported Formats:", supportedFormats, null);
 			gd.showDialog();
 			if (gd.wasCanceled()) return false;
 
+			PPM_WISCSCAN = gd.getNextNumber();
 			chosenFormat = supportedFormats[gd.getNextChoiceIndex()];
 
 		} catch(Throwable e){
@@ -120,11 +124,11 @@ public class Import_Slide_Scanner_ROIs implements PlugIn {
 				gd2.showDialog();
 				if(gd2.wasCanceled()) return false;
 
-				String filepath = FileChooser("Aperio");
-				if(filepath.isEmpty()) return false;
-				String xmlpath = filepath.substring(0, filepath.indexOf(".svs")) + ".xml";
+				fullFilePath = FileChooser("Aperio");
+				if(fullFilePath.isEmpty()) return false;
+				String xmlpath = fullFilePath.substring(0, fullFilePath.indexOf(".svs")) + ".xml";
 
-				AperioInterpreter  = new AperioScannerInterpreter(filepath, xmlpath);
+				AperioInterpreter  = new AperioScannerInterpreter(fullFilePath, xmlpath);
 
 				fullSlideImage = AperioInterpreter.getFullSlideImage();
 				lowresScanImage = AperioInterpreter.getLowResScanImage();
@@ -170,11 +174,11 @@ public class Import_Slide_Scanner_ROIs implements PlugIn {
 		slideSIFTmatches = slideROIS.getFloatPolygon();		
 
 	}
-	
+
 	private float[] calculateTissueLocationOnSlide(){
 		return calculateTissueLocationOnSlide(lowresSIFTmatches, slideSIFTmatches);
 	}
-	
+
 	private float[] calculateTissueLocationOnSlide(FloatPolygon thumbnailPolygon, FloatPolygon slidePolygon){
 
 		float[] xThumb = thumbnailPolygon.xpoints;
@@ -263,34 +267,60 @@ public class Import_Slide_Scanner_ROIs implements PlugIn {
 		return retVal;
 
 	}
-	
+
 	private ArrayList<ArrayList<Float>> placeROISonSlideImage(boolean showOnImage){
 
 		ArrayList<ArrayList<Float>> retVal = new ArrayList<ArrayList<Float>>();
-		ArrayList<Float> x = new ArrayList<Float>(), y = new ArrayList<Float>();
-		
+		//ArrayList<Float> x = new ArrayList<Float>(), y = new ArrayList<Float>();
+
 		if(chosenFormat.equalsIgnoreCase("Ventana")) ;		//TODO: ventana format stuff
 		else if(chosenFormat.equalsIgnoreCase("Aperio")) retVal = AperioInterpreter.scaleROIStoLowresImage();
-		
+
 		for(int i=0; i<retVal.get(0).size(); i++){
-			x.add( (float) ( (retVal.get(0).get(i) * Math.abs(avgROIzoomRatioXY[0])) + tissueLocationOnSlide[0]));
-			y.add( (float) ( (retVal.get(1).get(i) * Math.abs(avgROIzoomRatioXY[1])) + tissueLocationOnSlide[1]));
+			retVal.get(0).set(i, (float) ( (retVal.get(0).get(i) * Math.abs(avgROIzoomRatioXY[0])) + tissueLocationOnSlide[0]));
+			retVal.get(1).set(i, (float) ( (retVal.get(1).get(i) * Math.abs(avgROIzoomRatioXY[1])) + tissueLocationOnSlide[1]));
 		}
-		IJ.log(""+x.get(0) + ", " + y.get(0));
-		
-		retVal.clear();
-		retVal.add(x);
-		retVal.add(y);
-		
-		IJ.log(""+retVal.get(0).get(0) + ", " + retVal.get(1).get(0));
+
 		if(showOnImage) MiniBioformatsTool.attachROIStoImage(fullSlideImage, retVal);
 		return retVal;
 	}
-	
-	private void recreateROIListRelativeToStartPoint(){
-		
+
+	public ArrayList<ArrayList<Float>> recreateROIListRelativeToStartPoint(){
+		return recreateROIListRelativeToStartPoint(rois, AperioInterpreter.getUserSelectedZero());
 	}
 
+	public static ArrayList<ArrayList<Float>> recreateROIListRelativeToStartPoint(ArrayList<ArrayList<Float>> vertices, double[] startPointXY){
+
+		for(int i=0; i<vertices.get(0).size(); i++){
+			vertices.get(0).set(i, (float) ( vertices.get(0).get(i) - startPointXY[0] ) );
+			vertices.get(1).set(i, (float) ( vertices.get(1).get(i) - startPointXY[1] ) );
+		}
+		//MiniBioformatsTool.attachROIStoImage(fullSlideImage, vertices);
+		return vertices;
+	}
+
+	public void writeWiscScanXYZ(){
+		writeWiscScanXYZ(fullFilePath, rois);
+	}
+
+	public void writeWiscScanXYZ(String filepath, ArrayList<ArrayList<Float>> vertices){
+		PrintWriter writer = null;
+		try {
+			writer = new PrintWriter(filepath + "_WISCSCAN.xyz");
+			writer.println("This is a WiscScan generated XYZ-position file. Modifying the contents of this file could cause WiscScan to crash while loading the	file!\n");
+			writer.println("X\tY\tXRect\tYRect\n");
+
+			for(int i=0; i<vertices.get(0).size(); i++)
+				writer.println( ( vertices.get(0).get(i) * (PPM_WISCSCAN / PPM_SLIDE) )
+						+ "\t" + ( vertices.get(1).get(i) * (PPM_WISCSCAN / PPM_SLIDE) )
+						+ "\t" + "0");
+		} catch (FileNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} finally{
+			if(writer != null) writer.close();
+		}
+	}
 
 
 
