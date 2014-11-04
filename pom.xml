@@ -54,10 +54,10 @@
 	</developers>
 
 	<scm>
-		<connection>scm:git:git://github.com/uw-loci/SlideScannerImporter</connection>
-		<developerConnection>scm:git:git@github.com:uw-loci/SlideScannerImporter</developerConnection>
+		<connection>scm:git:git://github.com/uw-loci/slide-scanner-importer</connection>
+		<developerConnection>scm:git:git@github.com:uw-loci/slide-scanner-importer</developerConnection>
 		<tag>HEAD</tag>
-		<url>https://github.com/uw-loci/SlideScannerImporter</url>
+		<url>https://github.com/uw-loci/slide-scanner-importer</url>
 	</scm>
 
 	<repositories>
