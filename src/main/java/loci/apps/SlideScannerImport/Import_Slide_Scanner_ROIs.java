@@ -25,30 +25,19 @@ package loci.apps.SlideScannerImport;
 import ij.IJ;
 import ij.ImageJ;
 import ij.ImagePlus;
-import ij.ImageStack;
-import ij.WindowManager;
 import ij.gui.GenericDialog;
-import ij.gui.PolygonRoi;
 import ij.gui.Roi;
 import ij.macro.Interpreter;
-import ij.measure.ResultsTable;
 import ij.plugin.PlugIn;
 import ij.process.FloatPolygon;
-import ij.process.ImageProcessor;
 
 import java.awt.FileDialog;
-import java.awt.Rectangle;
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
-
-import loci.plugins.in.ImagePlusReader;
-import loci.plugins.in.ImportProcess;
-import loci.plugins.in.ImporterOptions;
-import loci.plugins.in.ImporterPrompter;
 
 public class Import_Slide_Scanner_ROIs implements PlugIn {
 
@@ -124,16 +113,23 @@ public class Import_Slide_Scanner_ROIs implements PlugIn {
 
 		if(chosenFormat.equalsIgnoreCase("Ventana")){		
 			try{
-				GenericDialog gd2 = new GenericDialog("Import Ventana ROIs");
-				gd2.addMessage ("Please run the Ventana Slide Viewer software to get details	about the largest image.");
-				gd2.addNumericField ("Tissue Size X (pixels)",  40000, 0);	
-				gd2.addNumericField ("Tissue Size Y (pixels)",  70000, 0);
-				gd2.addMessage ("Please run WiscScan and measure the dimensions of the slide (in microns).");
-				gd2.addNumericField ("Slide Size X (microns)",  1600, 0);
-				gd2.addNumericField ("Slide Size Y (microns)",  8000, 0);
-
+				GenericDialog gd2 = new GenericDialog("Import Aperio ROIs");
+				gd2.addMessage("When loading the Ventana format, you need 3 files:\n"
+						+ "Original TIF image (*.tif)\n"
+						+ "XML with Annotations (*.xml)\n"
+						+ "Thumbnail image (*_thumb.bmp)\n"
+						+ "\n  \nYou will be prompted to select the TIF file only.\n"
+						+ "Please ensure that all the files have the same name and\n are in the same directory, and press OK");
+				gd2.setOKLabel("Import File");
 				gd2.showDialog();
-				if (gd2.wasCanceled()) return false;
+				if(gd2.wasCanceled()) return false;
+				
+				fullFilePath = FileChooser("Ventana");
+				if(fullFilePath.isEmpty()) return false;
+				String xmlpath = fullFilePath.substring(0, fullFilePath.indexOf(".tif")) + ".xml";
+				String thumbnailpath = fullFilePath.substring(0, fullFilePath.indexOf(".tif")) + "_thumb.bmp";
+				
+				VentanaInterpreter = new VentanaScannerInterpreter(fullFilePath, thumbnailpath, xmlpath);
 
 				//				bigTissuePicSizeX = gd2.getNextNumber();
 				//				bigTissuePicSizeY = gd2.getNextNumber();
@@ -184,7 +180,7 @@ public class Import_Slide_Scanner_ROIs implements PlugIn {
 		FileDialog fd = new FileDialog(IJ.getInstance(), "Choose a file", FileDialog.LOAD);
 		fd.setDirectory("C:\\");
 		if(format.equalsIgnoreCase("Ventana"))
-			fd.setFile("*.");
+			fd.setFile("*.tif");
 		else if(format.equalsIgnoreCase("Aperio"))
 			fd.setFile("*.svs");
 		fd.setVisible(true);

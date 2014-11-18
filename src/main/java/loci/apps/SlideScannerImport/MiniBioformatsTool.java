@@ -22,16 +22,16 @@
  */
 package loci.apps.SlideScannerImport;
 
+import ij.IJ;
 import ij.ImagePlus;
 import ij.gui.PolygonRoi;
 import ij.gui.Roi;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 
 import loci.common.xml.XMLTools;
-import loci.formats.FormatException;
-import loci.plugins.in.ImagePlusReader;
 import loci.plugins.in.ImportProcess;
 import loci.plugins.in.ImporterOptions;
 import loci.plugins.util.ImageProcessorReader;
@@ -39,6 +39,8 @@ import ome.xml.meta.MetadataStore;
 import ome.xml.meta.OMEXMLMetadata;
 import ome.xml.meta.OMEXMLMetadataRoot;
 
+import org.apache.commons.imaging.ImageReadException;
+import org.apache.commons.imaging.Imaging;
 import org.w3c.dom.Element;
 
 public class MiniBioformatsTool {
@@ -46,11 +48,11 @@ public class MiniBioformatsTool {
 	final String imageID;
 	ImporterOptions options;
 	ImportProcess process;
-	//	ImagePlusReader reader;
 	ImagePlus[] imps;
 	OMEXMLMetadata omexmlMeta;
 	MetadataStore store;
 	OMEXMLMetadataRoot root;
+	String tiffInfo;
 
 	public MiniBioformatsTool(String fullImagePath) throws Exception{
 
@@ -66,17 +68,46 @@ public class MiniBioformatsTool {
 		store = process.getReader().getMetadataStore();
 		omexmlMeta = (OMEXMLMetadata) store;
 		root = (OMEXMLMetadataRoot) omexmlMeta.getRoot();
+		populateTiffInfo();
 
+		IJ.log("");
 	}
 	
-//	//DOES NOT WORK
-//	public ImagePlus[] getImages() throws FormatException, IOException{
-//		if(imps == null){
-//			ImagePlusReader reader = new ImagePlusReader(process);
-//			imps = reader.openImagePlus();
-//		}
-//		return imps;
-//	}
+	public ImageProcessorReader getReader(){
+		return process.getReader();
+	}
+	
+	public ImportProcess getProcess(){
+		return process;
+	}
+	
+	public ImporterOptions getOptions(){
+		return options;
+	}
+
+	public String getTiffInfo(){
+		return tiffInfo;
+	}
+
+	private void populateTiffInfo(){
+		try {
+			tiffInfo = TIFFINFO(imageID);
+		} catch (Throwable e){
+			IJ.log("Tiff Info Cannot Be Populated");
+			return;
+		}		
+	}
+
+	public static String TIFFINFO(String path) throws ImageReadException, IOException{
+		File img3 = new File(path);
+		return Imaging.dumpImageFile(img3);
+
+		//		String temp = Imaging.getXmpXml(img3);
+		//		ICC_Profile temp3 = Imaging.getICCProfile(img3);
+		//		Dimension temmp4 = Imaging.getImageSize(img3);
+		//		IImageMetadata imeta = Imaging.getMetadata(img3);	//this has what we want, but difficult to get
+		//		List<? extends IImageMetadataItem> metaItems = imeta.getItems();
+	}
 
 	public static void attachROIStoImage(ImagePlus imp, ArrayList<ArrayList<Float>> vertices ){
 

@@ -25,27 +25,15 @@ package loci.apps.SlideScannerImport;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.gui.GenericDialog;
-import ij.gui.PolygonRoi;
-import ij.gui.Roi;
-import ij.process.FloatPolygon;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
 
-import org.w3c.dom.Element;
-
-import ome.xml.meta.MetadataStore;
-import ome.xml.meta.OMEXMLMetadata;
-import ome.xml.meta.OMEXMLMetadataRoot;
-import loci.common.xml.XMLTools;
 import loci.formats.FormatException;
 import loci.plugins.BF;
-import loci.plugins.in.ImagePlusReader;
-import loci.plugins.in.ImportProcess;
 import loci.plugins.in.ImporterOptions;
-import loci.plugins.util.ImageProcessorReader;
 
 public class AperioScannerInterpreter {
 	private String svsFullPath, xmlFullPath;
@@ -56,9 +44,9 @@ public class AperioScannerInterpreter {
 	private MiniBioformatsTool xmlHolder;
 	private String XMLasString;
 
-	public AperioScannerInterpreter(String svsFullPath, String xmlFullPath) {
+	public AperioScannerInterpreter(String imageFullPath, String xmlFullPath) {
 
-		this.svsFullPath = svsFullPath;
+		this.svsFullPath = imageFullPath;
 		this.xmlFullPath = xmlFullPath;
 
 		try{
@@ -278,6 +266,3 @@ public class AperioScannerInterpreter {
 
 
 }
-
-
-// open=[D:\\LOCI\\Aperio Images\\test images\\Stroma Pancreas 2000.svs] color_mode=Default open_files display_metadata display_ome-xml specify_range view=Hyperstack stack_order=XYCZT series_4 series_7 c_begin_4=1 c_end_4=3 c_step_4=1 c_begin_7=1 c_end_7=3 c_step_7=1"
