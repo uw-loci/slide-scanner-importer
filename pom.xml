@@ -106,10 +106,13 @@
 			<scope>test</scope>
 		</dependency>
 		
+		<!-- NB: Artifact is deployed to imagej thirdparty repository.
+		     Built from IMAGING_1_0_RC7 tag:
+		     https://github.com/apache/commons-imaging/tree/IMAGING_1_0_RC7 -->
 		<dependency>
 			<groupId>org.apache.commons</groupId>
 			<artifactId>commons-imaging</artifactId>
-			<version>1.0-SNAPSHOT</version>
+			<version>1.0</version>
 		</dependency>
 	</dependencies>
 
