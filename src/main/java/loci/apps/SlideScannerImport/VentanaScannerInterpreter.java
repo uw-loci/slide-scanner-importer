@@ -107,18 +107,20 @@ public class VentanaScannerInterpreter {
 			boolean[] temp = {true};
 			openVentanaImages();
 			//			Debug:
-			fullSlideImage.show();
-			lowresScanImage.show();
+//			fullSlideImage.show();
+//			lowresScanImage.show();
 
-			rois = interpretROISfromXML();
+			rois = interpretROISfromXML();		
 			
-			//			Debug:
-			MiniBioformatsTool.attachROIStoImage(lowresScanImage, rois);
 			zeroPoint = promptForStartPoint(fullSlideImage);
 			zoomRatioXY = new double[2];
 			zoomRatioXY[0] = largeImageDimensions[0] / lowresScanImage.getWidth();
 			zoomRatioXY[1] = largeImageDimensions[1] / lowresScanImage.getHeight();
-
+			
+			//			Debug:
+//			rois = scaleROIStoLowresImage();
+//			MiniBioformatsTool.attachROIStoImage(lowresScanImage, rois);
+			IJ.log("");
 
 		} catch(Exception e){
 			IJ.log(e.getMessage());
@@ -183,6 +185,10 @@ public class VentanaScannerInterpreter {
 	}
 
 	public ArrayList<ArrayList<Float>> scaleROIStoLowresImage(){
+		return scaleROIStoLowresImage(rois, zoomRatioXY);
+	}
+	
+	public static ArrayList<ArrayList<Float>> scaleROIStoLowresImage(ArrayList<ArrayList<Float>> rois, double[] zoomRatioXY){
 
 		ArrayList<ArrayList<Float>> retVal = new ArrayList<ArrayList<Float>>();
 		ArrayList<Float> x = new ArrayList<Float>(), y = new ArrayList<Float>();
@@ -209,6 +215,7 @@ public class VentanaScannerInterpreter {
 			
 			ImagePlusReader reader = new ImagePlusReader(process);
 			fullSlideImage = reader.openImagePlus()[0];
+			IJ.run(fullSlideImage, "Rotate 90 Degrees Left", "");
 
 			MiniBioformatsTool thumbnailHolder = new MiniBioformatsTool(thumbnailFullPath);
 			reader = new ImagePlusReader(thumbnailHolder.getProcess());
@@ -366,7 +373,23 @@ public class VentanaScannerInterpreter {
 		return sb.toString();
 	}
 
+	public static ArrayList<ArrayList<Float>> rotateClockwise90(ArrayList<ArrayList<Float>> vertices){
+		//Rotating: newX = bigTissuePicSizeY - vertices.get(1).get(i) === newX = sizeOfBigPicture_Y - ROI_Y
+		//          newY = vertices.get(0).get(i) {before changes made, so temp} === newY = X
 
+		float temp;
+		for(int i=0; i<vertices.get(0).size(); i++){
+
+			//set new left aligned x coords
+			temp = vertices.get(0).get(i);
+			vertices.get(0).set(i, (vertices.get(1).get(i)));
+
+			//set new top aligned y coords
+			vertices.get(1).set(i, temp);
+		}
+
+		return vertices;
+	}
 
 
 

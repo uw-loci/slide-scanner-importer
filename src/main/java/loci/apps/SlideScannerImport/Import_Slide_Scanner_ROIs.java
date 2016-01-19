@@ -75,7 +75,7 @@ public class Import_Slide_Scanner_ROIs implements PlugIn {
 		tissueLocationOnSlide = calculateTissueLocationOnSlide();
 		rois = placeROISonSlideImage(true);
 		rois = recreateROIListRelativeToStartPoint();
-		calculateSlidePPM();
+		//calculateSlidePPM();
 		writeWiscScanXYZ();
 		lowresScanImage.close();
 
@@ -130,11 +130,10 @@ public class Import_Slide_Scanner_ROIs implements PlugIn {
 				String thumbnailpath = fullFilePath.substring(0, fullFilePath.indexOf(".tif")) + "_thumb.bmp";
 				
 				VentanaInterpreter = new VentanaScannerInterpreter(fullFilePath, thumbnailpath, xmlpath);
-
-				//				bigTissuePicSizeX = gd2.getNextNumber();
-				//				bigTissuePicSizeY = gd2.getNextNumber();
-				//				slideActualMicronSizeX =(float) gd2.getNextNumber();
-				//				slideActualMicronSizeY = (float) gd2.getNextNumber();
+				lowresScanImage = VentanaInterpreter.getLowResScanImage();
+				fullSlideImage = VentanaInterpreter.getFullSlideImage();
+				rois = VentanaInterpreter.getROIsList();
+				zoomRatioXY = VentanaInterpreter.getZoomRatioXY();
 
 				return true;
 			}catch(Throwable e){
@@ -302,7 +301,7 @@ public class Import_Slide_Scanner_ROIs implements PlugIn {
 		ArrayList<ArrayList<Float>> retVal = new ArrayList<ArrayList<Float>>();
 		//ArrayList<Float> x = new ArrayList<Float>(), y = new ArrayList<Float>();
 
-		if(chosenFormat.equalsIgnoreCase("Ventana")) ;		//TODO: ventana format stuff
+		if(chosenFormat.equalsIgnoreCase("Ventana")) retVal = rois;		//TODO: ventana format stuff
 		else if(chosenFormat.equalsIgnoreCase("Aperio")) retVal = AperioInterpreter.scaleROIStoLowresImage();
 
 		for(int i=0; i<retVal.get(0).size(); i++){
@@ -311,11 +310,15 @@ public class Import_Slide_Scanner_ROIs implements PlugIn {
 		}
 
 		if(showOnImage) MiniBioformatsTool.attachROIStoImage(fullSlideImage, retVal);
+		IJ.log("");
+		
 		return retVal;
 	}
 
 	public ArrayList<ArrayList<Float>> recreateROIListRelativeToStartPoint(){
-		return recreateROIListRelativeToStartPoint(rois, AperioInterpreter.getUserSelectedZero());
+		if(chosenFormat.equalsIgnoreCase("Ventana")) return recreateROIListRelativeToStartPoint(rois, VentanaInterpreter.getUserSelectedZero());
+		else if (chosenFormat.equalsIgnoreCase("Aperio")) return recreateROIListRelativeToStartPoint(rois, AperioInterpreter.getUserSelectedZero());
+		return null;
 	}
 
 	public static ArrayList<ArrayList<Float>> recreateROIListRelativeToStartPoint(ArrayList<ArrayList<Float>> vertices, double[] startPointXY){
@@ -329,7 +332,11 @@ public class Import_Slide_Scanner_ROIs implements PlugIn {
 	}
 	
 	private void calculateSlidePPM(){
-		double[] PPM = AperioInterpreter.getPPMofLowResImage();
+		double[] PPM = null;
+		if(chosenFormat.equalsIgnoreCase("Ventana")) PPM = VentanaInterpreter.getPPMofLowResImage();
+		else if(chosenFormat.equalsIgnoreCase("Aperio")) PPM = AperioInterpreter.getPPMofLowResImage();
+		else return;
+		
 		PPM[0] *= Math.abs(avgROIzoomRatioXY[0]);
 		PPM[1] *= Math.abs(avgROIzoomRatioXY[1]);
 		PPM_SLIDE_XY = PPM;

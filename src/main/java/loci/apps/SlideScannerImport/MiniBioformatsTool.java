@@ -32,6 +32,10 @@ import java.io.IOException;
 import java.util.ArrayList;
 
 import loci.common.xml.XMLTools;
+import loci.formats.FormatException;
+import loci.formats.tiff.IFD;
+import loci.formats.tiff.IFDList;
+import loci.formats.tiff.TiffParser;
 import loci.plugins.in.ImportProcess;
 import loci.plugins.in.ImporterOptions;
 import loci.plugins.util.ImageProcessorReader;
@@ -98,8 +102,15 @@ public class MiniBioformatsTool {
 		}		
 	}
 
-	public static String TIFFINFO(String path) throws ImageReadException, IOException{
+	public static String TIFFINFO(String path) throws ImageReadException, IOException, FormatException{
 		File img3 = new File(path);
+		TiffParser tp = new TiffParser(path);
+		IFDList temp = tp.getExifIFDs();
+		String comment = tp.getComment();
+		IFD temp2 = tp.getIFD(tp.getFirstOffset());
+		IFDList temp3 = tp.getIFDs();
+		IFDList temp4 = tp.getNonThumbnailIFDs();
+		IFDList temp5 = tp.getThumbnailIFDs();
 		return Imaging.dumpImageFile(img3);
 
 		//		String temp = Imaging.getXmpXml(img3);
