@@ -16,12 +16,12 @@
 
 	<name>Slide Scanner Importer</name>
 	<description>Aperio and Ventana slide scanner importer plugin for ImageJ.</description>
-	<url>http://loci.wisc.edu/software/slide-scanner-importer</url>
+	<url>https://loci.wisc.edu/software/slide-scanner-importer</url>
 	<inceptionYear>2014</inceptionYear>
 	<licenses>
 		<license>
 			<name>GNU General Public License v2+</name>
-			<url>http://www.gnu.org/licenses/gpl-2.0.txt</url>
+			<url>https://www.gnu.org/licenses/gpl-2.0.txt</url>
 			<distribution>repo</distribution>
 		</license>
 	</licenses>
@@ -55,7 +55,7 @@
 	<repositories>
 		<repository>
 			<id>imagej.public</id>
-			<url>http://maven.imagej.net/content/groups/public</url>
+			<url>https://maven.imagej.net/content/groups/public</url>
 		</repository>
 	</repositories>
 
