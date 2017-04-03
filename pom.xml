@@ -39,7 +39,7 @@
 	</developers>
 	<contributors>
 		<contributor>
-			<id>avivekan</id>
+			<properties><id>avivekan</id></properties>
 			<name>Ajeet Vivekanandan</name>
 			<roles><role>founder</role></roles>
 		</contributor>
