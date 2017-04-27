@@ -93,7 +93,6 @@ Wisconsin-Madison.</license.copyrightOwners>
 		<dependency>
 			<groupId>mpicbg</groupId>
 			<artifactId>mpicbg</artifactId>
-			<version>0.6.1</version>
 		</dependency>
 		<dependency>
 			<groupId>net.imagej</groupId>
